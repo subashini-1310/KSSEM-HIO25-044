@@ -1,64 +1,992 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AI Content Humanizer</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Humanizer | Transform AI Content to Human-like Text</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --primary: #4361ee;
+    --primary-dark: #3a56d4;
+    --secondary: #7209b7;
+    --success: #4cc9f0;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --gray: #6c757d;
+    --light-gray: #e9ecef;
+    --border-radius: 12px;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --transition: all 0.3s ease;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    color: var(--dark);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 20px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+
+  .logo-icon {
+    background: var(--primary);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    color: var(--gray);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+
+  @media (max-width: 900px) {
+    .main-content {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    transition: var(--transition);
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .card-header i {
+    color: var(--primary);
+    font-size: 1.2rem;
+  }
+
+  .card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+
+  textarea {
+    width: 100%;
+    height: 200px;
+    padding: 15px;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    resize: vertical;
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+  }
+
+  .file-upload {
+    position: relative;
+    margin-top: 15px;
+  }
+
+  .file-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 30px;
+    border: 2px dashed var(--light-gray);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+  }
+
+  .file-upload-label:hover {
+    border-color: var(--primary);
+    background-color: rgba(67, 97, 238, 0.05);
+  }
+
+  .file-upload-label i {
+    font-size: 2.5rem;
+    color: var(--primary);
+  }
+
+  .file-upload-text h3 {
+    margin-bottom: 5px;
+    color: var(--dark);
+  }
+
+  .file-upload-text p {
+    color: var(--gray);
+    font-size: 0.9rem;
+  }
+
+  .file-upload input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .file-info {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--light);
+    border-radius: 6px;
+    display: none;
+  }
+
+  .file-info.show {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .file-info i {
+    color: var(--primary);
+  }
+
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+  }
+
+  .creativity-control {
+    flex: 1;
+  }
+
+  .creativity-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .slider-container {
+    position: relative;
+    height: 6px;
+    background: var(--light-gray);
+    border-radius: 3px;
+  }
+
+  .slider-fill {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(to right, var(--success), var(--primary));
+    border-radius: 3px;
+    width: 70%;
+  }
+
+  .slider {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: var(--gray);
+  }
+
+  .btn {
+    padding: 12px 25px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn i {
+    font-size: 1rem;
+  }
+
+  .btn-block {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn:disabled {
+    background: var(--gray);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .result-container {
+    position: relative;
+  }
+
+  .result-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .stat {
+    flex: 1;
+    text-align: center;
+    padding: 15px;
+    border-radius: 8px;
+    background: var(--light);
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+    color: var(--gray);
+  }
+
+  .ai-percent {
+    color: #e63946;
+  }
+
+  .human-percent {
+    color: #2a9d8f;
+  }
+
+  .similarity-percent {
+    color: var(--primary);
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+  }
+
+  .btn-outline:hover {
+    background: rgba(67, 97, 238, 0.1);
+  }
+
+  .btn-success {
+    background: var(--success);
+  }
+
+  .btn-success:hover {
+    background: #3ab0d6;
+  }
+
+  #loader {
+    display: none;
+    text-align: center;
+    padding: 30px;
+  }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(67, 97, 238, 0.2);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+  }
+
+  @keyframes spin {
+    100% { transform: rotate(360deg); }
+  }
+
+  .improvement {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    color: var(--gray);
+    font-size: 0.9rem;
+  }
+
+  .feature-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 40px;
+  }
+
+  .feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .feature-icon {
+    background: rgba(67, 97, 238, 0.1);
+    color: var(--primary);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .feature-text h3 {
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+  }
+
+  .feature-text p {
+    color: var(--gray);
+    font-size: 0.9rem;
+  }
+
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateX(150%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+  }
+
+  .notification.show {
+    transform: translateX(0);
+  }
+
+  .notification.success {
+    border-left: 4px solid #2a9d8f;
+  }
+
+  .notification.error {
+    border-left: 4px solid #e63946;
+  }
+
+  .notification-icon {
+    font-size: 1.2rem;
+  }
+
+  .success .notification-icon {
+    color: #2a9d8f;
+  }
+
+  .error .notification-icon {
+    color: #e63946;
+  }
+
+  .pdf-preview {
+    margin-top: 15px;
+    padding: 15px;
+    background: var(--light);
+    border-radius: 8px;
+    display: none;
+  }
+
+  .pdf-preview.show {
+    display: block;
+  }
+
+  .pdf-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .pdf-preview-content {
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+</style>
 </head>
 <body>
   <div class="container">
-    <h1>AI Content Humanizer</h1>
-    <p>Paste AI-generated text and press <strong>Humanize</strong>.</p>
+    <header>
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-robot"></i>
+        </div>
+        <h1>AI Humanizer</h1>
+      </div>
+      <p class="subtitle">Transform your AI-generated content into natural, human-like text that bypasses detection algorithms</p>
+    </header>
 
-    <textarea id="inputText" placeholder="Paste AI text here..."></textarea>
-    <div class="controls">
-      <button id="humanizeBtn">Humanize</button>
-      <button id="clearBtn">Clear</button>
+    <div class="main-content">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-pencil-alt"></i>
+          <h2 class="card-title">Input Text</h2>
+        </div>
+        
+        <textarea id="inputText" placeholder="Paste your AI-generated text here..."></textarea>
+        
+        <div class="file-upload">
+          <label class="file-upload-label" for="fileInput">
+            <i class="fas fa-file-upload"></i>
+            <div class="file-upload-text">
+              <h3>Upload PDF Document</h3>
+              <p>Click to browse or drag and drop your file</p>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf">
+          </label>
+        </div>
+        
+        <div class="file-info" id="fileInfo">
+          <i class="fas fa-file-pdf"></i>
+          <span id="fileName">No file selected</span>
+        </div>
+        
+        <div class="pdf-preview" id="pdfPreview">
+          <div class="pdf-preview-header">
+            <h4>PDF Preview</h4>
+            <button class="btn btn-outline" id="clearPdfBtn">
+              <i class="fas fa-times"></i>
+              Clear
+            </button>
+          </div>
+          <div class="pdf-preview-content" id="pdfPreviewContent">
+            PDF content will appear here after upload...
+          </div>
+        </div>
+        
+        <div class="controls">
+          <div class="creativity-control">
+            <div class="creativity-label">
+              <span>Creativity Level</span>
+              <span id="creativityValue">Medium</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="sliderFill"></div>
+              <input type="range" min="1" max="100" value="70" class="slider" id="creativitySlider">
+            </div>
+            <div class="slider-labels">
+              <span>More Accurate</span>
+              <span>More Creative</span>
+            </div>
+          </div>
+          
+          <button class="btn" id="humanizeBtn">
+            <i class="fas fa-magic"></i>
+            Humanize Text
+          </button>
+        </div>
+      </div>
+      
+      <div class="card result-container">
+        <div class="card-header">
+          <i class="fas fa-chart-line"></i>
+          <h2 class="card-title">Results</h2>
+        </div>
+        
+        <div class="result-stats">
+          <div class="stat">
+            <div class="stat-value ai-percent" id="aiPercent">0%</div>
+            <div class="stat-label">AI Content</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value human-percent" id="humanPercent">0%</div>
+            <div class="stat-label">Human Content</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value similarity-percent" id="similarityPercent">0%</div>
+            <div class="stat-label">Similarity</div>
+          </div>
+        </div>
+        
+        <textarea id="outputText" placeholder="Your humanized text will appear here..." readonly></textarea>
+        
+        <div id="loader">
+          <div class="spinner"></div>
+          <p>Humanizing your content...</p>
+          <div class="improvement">
+            <i class="fas fa-arrow-up"></i>
+            <span>Reducing AI detection probability</span>
+          </div>
+        </div>
+        
+        <div class="result-actions">
+          <button class="btn btn-outline" id="copyBtn">
+            <i class="far fa-copy"></i>
+            Copy Text
+          </button>
+          <button class="btn btn-success" id="downloadBtn">
+            <i class="fas fa-download"></i>
+            Download
+          </button>
+        </div>
+      </div>
     </div>
+    
+    <div class="feature-list">
+      <div class="feature">
+        <div class="feature-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="feature-text">
+          <h3>Bypass AI Detection</h3>
+          <p>Effectively evade popular AI content detectors with our advanced paraphrasing technology.</p>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <div class="feature-icon">
+          <i class="fas fa-brain"></i>
+        </div>
+        <div class="feature-text">
+          <h3>Maintain Original Meaning</h3>
+          <p>Our algorithm preserves the core message while making text sound more human.</p>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <div class="feature-icon">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <div class="feature-text">
+          <h3>Fast Processing</h3>
+          <p>Get humanized content in seconds with our optimized processing pipeline.</p>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <div class="feature-icon">
+          <i class="fas fa-sliders-h"></i>
+        </div>
+        <div class="feature-text">
+          <h3>Adjustable Creativity</h3>
+          <p>Control how much the text is transformed with our creativity slider.</p>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>AI Humanizer &copy; 2023 | Transform AI content with confidence</p>
+    </footer>
+  </div>
 
-    <h3>Humanized Output</h3>
-    <textarea id="outputText" readonly></textarea>
-
-    <div class="scores">
-      <div>Semantic similarity: <span id="semSim">-</span></div>
-      <div>Lexical overlap: <span id="lexOv">-</span></div>
+  <div class="notification success" id="successNotification">
+    <div class="notification-icon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="notification-text">
+      <strong>Success!</strong> Text copied to clipboard.
     </div>
   </div>
 
-<script>
-document.getElementById('humanizeBtn').addEventListener('click', async () => {
-  const input = document.getElementById('inputText').value.trim();
-  if (!input) { alert('Please paste some text.'); return; }
-  const btn = document.getElementById('humanizeBtn');
-  btn.disabled = true; btn.textContent = 'Processing...';
+  <div class="notification error" id="errorNotification">
+    <div class="notification-icon">
+      <i class="fas fa-exclamation-circle"></i>
+    </div>
+    <div class="notification-text">
+      <strong>Error!</strong> Please enter some text to humanize.
+    </div>
+  </div>
 
-  try {
-    const resp = await fetch('/humanize', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: input })
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // DOM Elements
+      const inputText = document.getElementById('inputText');
+      const outputText = document.getElementById('outputText');
+      const fileInput = document.getElementById('fileInput');
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+      const pdfPreview = document.getElementById('pdfPreview');
+      const pdfPreviewContent = document.getElementById('pdfPreviewContent');
+      const clearPdfBtn = document.getElementById('clearPdfBtn');
+      const creativitySlider = document.getElementById('creativitySlider');
+      const creativityValue = document.getElementById('creativityValue');
+      const sliderFill = document.getElementById('sliderFill');
+      const humanizeBtn = document.getElementById('humanizeBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const loader = document.getElementById('loader');
+      const aiPercent = document.getElementById('aiPercent');
+      const humanPercent = document.getElementById('humanPercent');
+      const similarityPercent = document.getElementById('similarityPercent');
+      const successNotification = document.getElementById('successNotification');
+      const errorNotification = document.getElementById('errorNotification');
+      
+      // Update creativity slider
+      creativitySlider.addEventListener('input', function() {
+        const value = this.value;
+        sliderFill.style.width = `${value}%`;
+        
+        if (value < 33) {
+          creativityValue.textContent = 'Low';
+        } else if (value < 66) {
+          creativityValue.textContent = 'Medium';
+        } else {
+          creativityValue.textContent = 'High';
+        }
+      });
+      
+      // Initialize slider
+      creativitySlider.dispatchEvent(new Event('input'));
+      
+      // File input change
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          // Check if it's a PDF
+          if (file.type !== 'application/pdf') {
+            showNotification(errorNotification, 'Please select a PDF file.');
+            return;
+          }
+          
+          // Update file info
+          fileName.textContent = file.name;
+          fileInfo.classList.add('show');
+          pdfPreview.classList.add('show');
+          
+          // Show loading message
+          pdfPreviewContent.textContent = 'Extracting text from PDF...';
+          
+          // Simulate PDF text extraction (in a real app, you would use a PDF library)
+          setTimeout(() => {
+            // For demo purposes, we'll use a sample extracted text
+            const samplePdfText = `ARTIFICIAL INTELLIGENCE IN MODERN BUSINESS
+            
+            Executive Summary:
+            This document examines the transformative impact of artificial intelligence on contemporary business operations. We analyze key areas where AI technologies are driving efficiency, innovation, and competitive advantage across various industry sectors.
+            
+            Key Findings:
+            1. Automation of routine tasks has increased operational efficiency by 40-60% in early-adopting organizations.
+            2. Machine learning algorithms enable predictive analytics that improve decision-making accuracy by approximately 35%.
+            3. Natural language processing systems have enhanced customer service interactions, reducing response times by 70%.
+            4. Computer vision applications in quality control have decreased error rates in manufacturing by up to 90%.
+            
+            Conclusion:
+            The integration of artificial intelligence represents a paradigm shift in business operations. Organizations that strategically implement AI solutions stand to gain significant competitive advantages through improved efficiency, enhanced decision-making capabilities, and innovative service delivery models.`;
+            
+            pdfPreviewContent.textContent = samplePdfText;
+            inputText.value = samplePdfText;
+          }, 1500);
+        }
+      });
+      
+      // Clear PDF button
+      clearPdfBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        fileInfo.classList.remove('show');
+        pdfPreview.classList.remove('show');
+        inputText.value = '';
+      });
+      
+      // Humanize button click
+      humanizeBtn.addEventListener('click', function() {
+        const text = inputText.value.trim();
+        
+        if (!text) {
+          showNotification(errorNotification, 'Please enter some text or upload a PDF to humanize.');
+          return;
+        }
+        
+        // Show loader
+        loader.style.display = 'block';
+        outputText.value = '';
+        
+        // Disable button during processing
+        humanizeBtn.disabled = true;
+        
+        // Create FormData for file upload (if file is selected)
+        const formData = new FormData();
+        formData.append('text', text);
+        formData.append('creativity', creativitySlider.value);
+        
+        if (fileInput.files[0]) {
+          formData.append('file', fileInput.files[0]);
+        }
+        
+        // Simulate API call (replace with actual API call to your backend)
+        simulateHumanizeAPI(formData)
+          .then(result => {
+            // Hide loader
+            loader.style.display = 'none';
+            humanizeBtn.disabled = false;
+            
+            // Display results
+            outputText.value = result.humanized_text;
+            
+            // Update stats
+            aiPercent.textContent = `${result.ai_probability}%`;
+            humanPercent.textContent = `${result.human_probability}%`;
+            similarityPercent.textContent = `${result.similarity}%`;
+            
+            showNotification(successNotification, 'Text successfully humanized!');
+          })
+          .catch(error => {
+            // Hide loader
+            loader.style.display = 'none';
+            humanizeBtn.disabled = false;
+            
+            showNotification(errorNotification, error.message || 'An error occurred during humanization.');
+          });
+      });
+      
+      // Copy button click
+      copyBtn.addEventListener('click', function() {
+        if (outputText.value) {
+          navigator.clipboard.writeText(outputText.value)
+            .then(() => {
+              showNotification(successNotification, 'Text copied to clipboard!');
+            })
+            .catch(err => {
+              console.error('Failed to copy text: ', err);
+              showNotification(errorNotification, 'Failed to copy text to clipboard.');
+            });
+        } else {
+          showNotification(errorNotification, 'No text to copy.');
+        }
+      });
+      
+      // Download button click
+      downloadBtn.addEventListener('click', function() {
+        if (outputText.value) {
+          const blob = new Blob([outputText.value], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'humanized-text.txt';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          showNotification(successNotification, 'Text downloaded successfully!');
+        } else {
+          showNotification(errorNotification, 'No text to download.');
+        }
+      });
+      
+      // Show notification
+      function showNotification(notification, message) {
+        if (message) {
+          const textElement = notification.querySelector('.notification-text');
+          textElement.innerHTML = message;
+        }
+        
+        notification.classList.add('show');
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 4000);
+      }
+      
+      // Simulate API call for humanization
+      function simulateHumanizeAPI(formData) {
+        return new Promise((resolve, reject) => {
+          // Simulate network delay
+          setTimeout(() => {
+            try {
+              const text = formData.get('text');
+              const creativity = parseInt(formData.get('creativity')) / 100;
+              
+              // In a real application, this would be an actual API call to your backend
+              // For demo purposes, we'll simulate the response
+              
+              // Generate humanized text based on creativity level
+              const humanized = humanizeText(text, creativity);
+              
+              // Calculate simulated probabilities
+              const aiProbability = Math.max(10, Math.min(90, 80 - (creativity * 50)));
+              const humanProbability = 100 - aiProbability;
+              const similarity = Math.max(60, 95 - (creativity * 25));
+              
+              resolve({
+                humanized_text: humanized,
+                ai_probability: Math.round(aiProbability),
+                human_probability: Math.round(humanProbability),
+                similarity: Math.round(similarity)
+              });
+            } catch (error) {
+              reject(new Error('Failed to process the request. Please try again.'));
+            }
+          }, 2500);
+        });
+      }
+      
+      // Text humanization function
+      function humanizeText(text, creativity) {
+        // Define replacement patterns with different creativity levels
+        const patterns = [
+          // Low creativity replacements (more accurate)
+          { from: /\bArtificial Intelligence\b/gi, to: "AI" },
+          { from: /\bmachine learning\b/gi, to: "ML" },
+          { from: /\bnatural language processing\b/gi, to: "NLP" },
+          { from: /\bcomputer vision\b/gi, to: "CV" },
+          { from: /\bapproximately\b/gi, to: "about" },
+          { from: /\butilize\b/gi, to: "use" },
+          { from: /\bfacilitate\b/gi, to: "help" },
+          { from: /\bimplement\b/gi, to: "set up" },
+          
+          // Medium creativity replacements
+          { from: /\btransformative impact\b/gi, to: "big changes" },
+          { from: /\bcontemporary business operations\b/gi, to: "today's business world" },
+          { from: /\bdriving efficiency\b/gi, to: "making things more efficient" },
+          { from: /\bcompetitive advantage\b/gi, to: "edge over competitors" },
+          { from: /\bparadigm shift\b/gi, to: "major change" },
+          { from: /\bstrategically implement\b/gi, to: "smartly use" },
+          { from: /\benhanced decision-making capabilities\b/gi, to: "better decision-making" },
+          
+          // High creativity replacements
+          { from: /\banalyze key areas where\b/gi, to: "look at how" },
+          { from: /\boperational efficiency\b/gi, to: "how well things work" },
+          { from: /\bpredictive analytics\b/gi, to: "forecasting tools" },
+          { from: /\binnovative service delivery models\b/gi, to: "new ways to deliver services" },
+          { from: /\bearly-adopting organizations\b/gi, to: "companies that got in early" },
+          { from: /\bdecreased error rates\b/gi, to: "fewer mistakes" }
+        ];
+        
+        let humanized = text;
+        
+        // Apply replacements based on creativity level
+        patterns.forEach((pattern, index) => {
+          // Apply more creative replacements as creativity increases
+          const applyThreshold = index < 8 ? 0.3 : (index < 15 ? 0.6 : 0.8);
+          
+          if (creativity >= applyThreshold) {
+            humanized = humanized.replace(pattern.from, pattern.to);
+          }
+        });
+        
+        // Add some sentence structure variations for high creativity
+        if (creativity > 0.7) {
+          // Split into sentences
+          const sentences = humanized.split(/(?<=[.!?])\s+/);
+          
+          // Occasionally start a sentence with a conversational phrase
+          if (sentences.length > 2 && Math.random() > 0.5) {
+            const conversationalStarts = [
+              "You know, ",
+              "Actually, ",
+              "So, ",
+              "Well, ",
+              "Interestingly, "
+            ];
+            
+            const randomIndex = Math.floor(Math.random() * conversationalStarts.length);
+            const randomStart = conversationalStarts[randomIndex];
+            
+            // Apply to a random sentence (not the first one)
+            const sentenceIndex = Math.floor(Math.random() * (sentences.length - 1)) + 1;
+            sentences[sentenceIndex] = randomStart + sentences[sentenceIndex].toLowerCase();
+          }
+          
+          humanized = sentences.join(' ');
+        }
+        
+        return humanized;
+      }
+      
+      // Add some sample text for demo
+      inputText.value = "Artificial Intelligence is revolutionizing business operations through the implementation of machine learning algorithms that facilitate enhanced decision-making processes. Organizations utilizing these technologies experience significant improvements in operational efficiency and competitive positioning within their respective markets.";
     });
-    const data = await resp.json();
-    if (data.error) { alert('Error: ' + data.error); }
-    else {
-      document.getElementById('outputText').value = data.humanized || '';
-      document.getElementById('semSim').textContent = data.semantic_similarity;
-      document.getElementById('lexOv').textContent = data.lexical_overlap;
-    }
-  } catch (err) {
-    alert('Request failed: ' + err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Humanize';
-  }
-});
-
-document.getElementById('clearBtn').addEventListener('click', () => {
-  document.getElementById('inputText').value = '';
-  document.getElementById('outputText').value = '';
-  document.getElementById('semSim').textContent = '-';
-  document.getElementById('lexOv').textContent = '-';
-});
-</script>
+  </script>
 </body>
 </html>

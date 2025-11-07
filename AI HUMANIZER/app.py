@@ -1,37 +1,46 @@
-# app.py
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
-from model_utils import paraphrase_text, semantic_similarity, lexical_overlap
+from flask import Flask, request, jsonify, render_template
+from model_utils import paraphrase_text
+from PyPDF2 import PdfReader
+import os
 
 app = Flask(__name__)
-CORS(app)
+
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+
+def extract_text_from_pdf(file):
+    """Extract text from PDF using PyPDF2"""
+    text = ""
+    try:
+        reader = PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text() or ""
+    except Exception as e:
+        print("PDF extraction failed:", e)
+    return text.strip()
+
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
+
 @app.route("/humanize", methods=["POST"])
-def humanize_text():
-    data = request.get_json(force=True)
-    text = (data.get("text") or "").strip()
-    if not text:
-        return jsonify({"error": "No text provided"}), 400
+def humanize():
+    text = request.form.get("text", "")
+    file = request.files.get("file")
 
-    try:
-        humanized = paraphrase_text(text)
-        sem_sim = semantic_similarity(text, humanized)
-        lex_ov = lexical_overlap(text, humanized)
+    if file and file.filename.endswith(".pdf"):
+        text = extract_text_from_pdf(file)
 
-        # helpful score interpretation
-        result = {
-            "original": text,
-            "humanized": humanized,
-            "semantic_similarity": sem_sim,   # close to 1 => meaning preserved
-            "lexical_overlap": lex_ov        # lower => more changed wording
-        }
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    if not text.strip():
+        return jsonify({"error": "No content found in file or text box"}), 400
+
+    humanized = paraphrase_text(text)
+    return jsonify({"humanized_text": humanized})
+
 
 if __name__ == "__main__":
     app.run(debug=True)
