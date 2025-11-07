@@ -1,0 +1,7 @@
+flask
+sentence-transformers
+serpapi
+nltk
+PyPDF2
+reportlab
+requests
