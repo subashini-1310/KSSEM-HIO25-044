@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Content Humanizer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>AI Content Humanizer</h1>
+    <p>Paste AI-generated text and press <strong>Humanize</strong>.</p>
+
+    <textarea id="inputText" placeholder="Paste AI text here..."></textarea>
+    <div class="controls">
+      <button id="humanizeBtn">Humanize</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+
+    <h3>Humanized Output</h3>
+    <textarea id="outputText" readonly></textarea>
+
+    <div class="scores">
+      <div>Semantic similarity: <span id="semSim">-</span></div>
+      <div>Lexical overlap: <span id="lexOv">-</span></div>
+    </div>
+  </div>
+
+<script>
+document.getElementById('humanizeBtn').addEventListener('click', async () => {
+  const input = document.getElementById('inputText').value.trim();
+  if (!input) { alert('Please paste some text.'); return; }
+  const btn = document.getElementById('humanizeBtn');
+  btn.disabled = true; btn.textContent = 'Processing...';
+
+  try {
+    const resp = await fetch('/humanize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: input })
+    });
+    const data = await resp.json();
+    if (data.error) { alert('Error: ' + data.error); }
+    else {
+      document.getElementById('outputText').value = data.humanized || '';
+      document.getElementById('semSim').textContent = data.semantic_similarity;
+      document.getElementById('lexOv').textContent = data.lexical_overlap;
+    }
+  } catch (err) {
+    alert('Request failed: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Humanize';
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('inputText').value = '';
+  document.getElementById('outputText').value = '';
+  document.getElementById('semSim').textContent = '-';
+  document.getElementById('lexOv').textContent = '-';
+});
+</script>
+</body>
+</html>
