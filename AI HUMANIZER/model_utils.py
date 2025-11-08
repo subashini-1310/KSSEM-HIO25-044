@@ -36,14 +36,13 @@ def calculate_similarity(text1, text2):
     Compute semantic similarity between two pieces of text
     using SentenceTransformer cosine similarity.
     """
-    # Ensure lowercase + trimmed inputs
+   
     text1, text2 = text1.strip().lower(), text2.strip().lower()
 
-    # Encode texts
     emb1 = similarity_model.encode(text1, convert_to_tensor=True, normalize_embeddings=True)
     emb2 = similarity_model.encode(text2, convert_to_tensor=True, normalize_embeddings=True)
 
-    # Calculate cosine similarity
+
     similarity_score = util.cos_sim(emb1, emb2).item()
     return round(similarity_score, 3)
 
